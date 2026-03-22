@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Minimal Login</title>
+    <style>
+        body {
+            font-family: system-ui, Arial, sans-serif;
+            max-width: 520px;
+            margin: 40px auto;
+            padding: 0 12px;
+        }
+
+        label {
+            display: block;
+            margin: 12px 0 6px;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        button {
+            margin-top: 12px;
+            padding: 10px 12px;
+        }
+
+        #msg {
+            margin-top: 12px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>Login</h2>
+
+    <form id="loginForm" novalidate>
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" autocomplete="username" />
+
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" />
+
+        <button type="submit">Sign in</button>
+        <div id="msg" role="status"></div>
+    </form>
+
+    <script>
+        const form = document.getElementById("loginForm");
+        const msg = document.getElementById("msg");
+
+        function setMessage(text) {
+            // Safe sink: renders text, not HTML.
+            msg.textContent = text;
+        }
+
+        function validateClient(email, password) {
+            if (!email || !password) return "Email and password cannot be empty.";
+            if (!email.includes("@")) return 'Email must contain "@".';
+            if (password.length < 8) return "Password must be at least 8 characters.";
+            return null;
+        }
+
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const email = document.getElementById("email").value.trim();
+            const password = document.getElementById("password").value;
+
+            const err = validateClient(email, password);
+            if (err) return setMessage(err);
+
+            setMessage("Submitting...");
+
+            try {
+                const resp = await fetch("/api/login", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({email, password})
+                });
+
+                const data = await resp.json().catch(() => ({}));
+                if (!resp.ok) return setMessage(data.error || "Login failed.");
+                return setMessage(data.message || "OK");
+            } catch {
+                return setMessage("Network error.");
+            }
+        });
+    </script>
+</body>
+
+</html>
